@@ -1,26 +1,133 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "leaflet/dist/leaflet.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #06080f;
+  color: #e2e8f0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(91,124,255,0.15), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 110%, rgba(168,85,247,0.10), transparent 60%);
+  background-attachment: fixed;
+  overscroll-behavior: none;
 }
+
+/* Prevent body scroll on mobile app-like experience */
+@media (max-width: 1023px) {
+  html, body { overflow: hidden; height: 100dvh; }
+}
+
+/* Focus rings */
+*:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(91,124,255,0.6), 0 0 0 4px rgba(91,124,255,0.15);
+  border-radius: 8px;
+}
+
+/* Leaflet dark theme */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #06080f;
+  z-index: 0;
+  font-family: inherit;
+}
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom { z-index: 1 !important; }
+.leaflet-control-attribution {
+  background: rgba(10,14,26,.75) !important;
+  color: #94a3b8 !important;
+  backdrop-filter: blur(8px);
+  border-radius: 6px;
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  margin: 4px !important;
+}
+.leaflet-control-attribution a { color: #94a3b8 !important; }
+
+.leaflet-popup-content-wrapper {
+  background: #0e1424 !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #1a2137 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(91,124,255,0.08) !important;
+  padding: 0 !important;
+}
+.leaflet-popup-content {
+  margin: 12px !important;
+  line-height: 1.4 !important;
+}
+.leaflet-popup-tip {
+  background: #0e1424 !important;
+  border: 1px solid #1a2137 !important;
+  box-shadow: none !important;
+}
+.leaflet-popup-close-button {
+  color: #94a3b8 !important;
+  font-size: 18px !important;
+  padding: 6px 8px 0 0 !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+.leaflet-popup-close-button:hover { color: #fff !important; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #232d4a;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: #354070; }
+
+/* Radar pulse */
+.radar-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.5;
+  animation: pulseRing 2s cubic-bezier(0.4,0,0.6,1) infinite;
+}
+@keyframes pulseRing {
+  0%   { transform: scale(0.8); opacity: 0.7; }
+  80%  { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #0e1424 25%, #1a2137 50%, #0e1424 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+/* Glass card */
+.glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Safe area for mobile bottom nav */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }

@@ -1,99 +1,72 @@
-// src/lib/api.ts
+import type { Vehicle, Alert, Trip } from "./types";
+import { mockVehicles, mockAlerts, mockTrips } from "./mockData";
 
-import { VehicleLocation, DashboardStats } from './types';
+const API = process.env.NEXT_PUBLIC_API_URL ?? "";
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
-// 🔧 Set to true to force mock data (useful while Rails isn't running)
-const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
-
-// -------------------- MOCK DATA --------------------
-const mockLocations: VehicleLocation[] = [
-  {
-    id: 1,
-    device_id: 'CAR001',
-    latitude: 24.8607,
-    longitude: 67.0011,
-    speed: 45,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    device_id: 'CAR002',
-    latitude: 24.8820,
-    longitude: 67.0650,
-    speed: 0,
-    created_at: new Date(Date.now() - 60_000).toISOString(),
-    updated_at: new Date(Date.now() - 60_000).toISOString(),
-  },
-  {
-    id: 3,
-    device_id: 'BIKE003',
-    latitude: 24.8320,
-    longitude: 67.0330,
-    speed: 22,
-    created_at: new Date(Date.now() - 120_000).toISOString(),
-    updated_at: new Date(Date.now() - 120_000).toISOString(),
-  },
-  {
-    id: 4,
-    device_id: 'TRUCK004',
-    latitude: 24.9130,
-    longitude: 67.0820,
-    speed: 65,
-    created_at: new Date(Date.now() - 30_000).toISOString(),
-    updated_at: new Date(Date.now() - 30_000).toISOString(),
-  },
-];
-
-const mockStats: DashboardStats = {
-  total_vehicles: mockLocations.length,
-  active_vehicles: mockLocations.filter(l => (l.speed ?? 0) > 0).length,
-  idle_vehicles: mockLocations.filter(l => (l.speed ?? 0) === 0).length,
-  offline_vehicles: 0,
-};
-
-// -------------------- HELPERS --------------------
-async function safeFetch<T>(url: string, fallback: T): Promise<T> {
-  if (USE_MOCK_DATA) {
-    console.log(`[MOCK] Returning mock data for ${url}`);
-    return fallback;
-  }
-
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
+export async function fetchVehicles(): Promise<Vehicle[]> {
+  if (!API) {
+    await delay(300);
+    return mockVehicles.map((v) => {
+      if (v.status !== "moving") return v;
+      return {
+        ...v,
+        lat: v.lat + (Math.random() - 0.5) * 0.002,
+        lng: v.lng + (Math.random() - 0.5) * 0.002,
+        speed: Math.max(0, Math.round(v.speed + (Math.random() - 0.5) * 10)),
+        lastUpdate: new Date().toISOString(),
+      };
     });
-
-    if (!res.ok) {
-      console.warn(`[API] ${url} returned ${res.status}. Using mock data.`);
-      return fallback;
-    }
-
-    return (await res.json()) as T;
-  } catch (error) {
-    console.warn(`[API] Failed to reach ${url}. Using mock data.`, error);
-    return fallback;
   }
+  const res = await fetch(`${API}/vehicles`);
+  if (!res.ok) throw new Error("Failed to load vehicles");
+  return res.json();
 }
 
-// -------------------- EXPORTS --------------------
-export async function fetchLatestLocations(): Promise<VehicleLocation[]> {
-  return safeFetch(`${API_BASE}/api/locations/latest`, mockLocations);
+export async function fetchAlerts(): Promise<Alert[]> {
+  if (!API) {
+    await delay(200);
+    return mockAlerts;
+  }
+  const res = await fetch(`${API}/alerts`);
+  if (!res.ok) throw new Error("Failed to load alerts");
+  return res.json();
 }
 
-export async function fetchVehicleHistory(
-  deviceId: string,
-  limit: number = 50
-): Promise<VehicleLocation[]> {
-  const url = `${API_BASE}/api/locations/history?device_id=${deviceId}&limit=${limit}`;
-  const fallback = mockLocations.filter(l => l.device_id === deviceId);
-  return safeFetch(url, fallback);
+export async function fetchTrips(): Promise<Trip[]> {
+  if (!API) {
+    await delay(200);
+    return mockTrips;
+  }
+  const res = await fetch(`${API}/trips`);
+  if (!res.ok) throw new Error("Failed to load trips");
+  return res.json();
 }
 
-export async function fetchDashboardStats(): Promise<DashboardStats> {
-  return safeFetch(`${API_BASE}/api/locations/stats`, mockStats);
+export async function setEngineLock(vehicleId: string, engineOn: boolean) {
+  if (!API) {
+    await delay(400);
+    return { vehicleId, engineOn };
+  }
+  const res = await fetch(`${API}/vehicles/${vehicleId}/engine`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ engineOn }),
+  });
+  if (!res.ok) throw new Error("Failed to update engine");
+  return res.json();
+}
+
+export async function setArm(vehicleId: string, armed: boolean) {
+  if (!API) {
+    await delay(300);
+    return { vehicleId, armed };
+  }
+  const res = await fetch(`${API}/vehicles/${vehicleId}/arm`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ armed }),
+  });
+  if (!res.ok) throw new Error("Failed to arm vehicle");
+  return res.json();
 }

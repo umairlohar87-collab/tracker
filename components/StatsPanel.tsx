@@ -1,72 +1,89 @@
-// src/components/StatsPanel.tsx
-'use client';
+"use client";
+import { Car, Activity, AlertTriangle, Fuel, TrendingUp, TrendingDown } from "lucide-react";
+import type { Vehicle } from "@/lib/types";
 
-import { DashboardStats } from '@/lib/types';
-import { Truck, Activity, PauseCircle, WifiOff } from 'lucide-react';
+export default function StatsPanel({ vehicles }: { vehicles: Vehicle[] }) {
+  const total = vehicles.length;
+  const moving = vehicles.filter((v) => v.status === "moving").length;
+  const unarmed = vehicles.filter((v) => !v.armed).length;
+  const avgFuel = total
+    ? Math.round(vehicles.reduce((s, v) => s + v.fuel, 0) / total)
+    : 0;
 
-interface StatsPanelProps {
-  stats: DashboardStats | null;
-}
-
-export default function StatsPanel({ stats }: StatsPanelProps) {
-  if (!stats) {
-    return (
-      <div className="grid grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white p-4 rounded-lg shadow animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-16 mb-2"></div>
-            <div className="h-8 bg-gray-200 rounded w-12"></div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  const items = [
-    { 
-      label: 'Total', 
-      value: stats.total_vehicles, 
-      icon: Truck, 
-      color: 'text-blue-600 bg-blue-50' 
+  const cards = [
+    {
+      label: "Total fleet",
+      value: total,
+      icon: Car,
+      tint: "from-blue-500/20 to-blue-500/0",
+      iconColor: "text-blue-400",
+      trend: "+2",
+      trendUp: true,
     },
-    { 
-      label: 'Moving', 
-      value: stats.active_vehicles, 
-      icon: Activity, 
-      color: 'text-green-600 bg-green-50' 
+    {
+      label: "Moving now",
+      value: moving,
+      icon: Activity,
+      tint: "from-emerald-500/20 to-emerald-500/0",
+      iconColor: "text-emerald-400",
+      trend: `${moving > 0 ? "LIVE" : "—"}`,
+      trendUp: moving > 0,
     },
-    { 
-      label: 'Idle', 
-      value: stats.idle_vehicles, 
-      icon: PauseCircle, 
-      color: 'text-yellow-600 bg-yellow-50' 
+    {
+      label: "Unarmed",
+      value: unarmed,
+      icon: AlertTriangle,
+      tint: "from-amber-500/20 to-amber-500/0",
+      iconColor: "text-amber-400",
+      trend: unarmed > 0 ? "risk" : "safe",
+      trendUp: unarmed === 0,
     },
-    { 
-      label: 'Offline', 
-      value: stats.offline_vehicles, 
-      icon: WifiOff, 
-      color: 'text-gray-600 bg-gray-50' 
+    {
+      label: "Avg fuel",
+      value: `${avgFuel}%`,
+      icon: Fuel,
+      tint: "from-purple-500/20 to-purple-500/0",
+      iconColor: "text-purple-400",
+      trend: avgFuel > 50 ? "healthy" : "low",
+      trendUp: avgFuel > 50,
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {items.map((item) => {
-        const Icon = item.icon;
-        return (
-          <div key={item.label} className="bg-white p-4 rounded-lg shadow">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${item.color}`}>
-                <Icon size={20} />
+    <div className="grid grid-cols-2 gap-3">
+      {cards.map((c) => (
+        <div
+          key={c.label}
+          className="group relative rounded-2xl bg-bg-soft/60 backdrop-blur border border-bg-border/60 p-3.5 overflow-hidden hover:border-brand/30 transition"
+        >
+          <div
+            className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${c.tint}`}
+          />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className={`h-8 w-8 rounded-lg bg-bg-card border border-bg-border/60 grid place-items-center ${c.iconColor}`}>
+                <c.icon className="h-4 w-4" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">{item.label}</p>
-                <p className="text-2xl font-bold text-gray-900">{item.value}</p>
+              <div
+                className={`flex items-center gap-0.5 text-[10px] font-semibold ${
+                  c.trendUp ? "text-emerald-400" : "text-amber-400"
+                }`}
+              >
+                {c.trendUp ? (
+                  <TrendingUp className="h-2.5 w-2.5" />
+                ) : (
+                  <TrendingDown className="h-2.5 w-2.5" />
+                )}
+                {c.trend}
               </div>
             </div>
+            <div className="text-2xl font-bold text-white leading-none tracking-tight">
+              {c.value}
+            </div>
+            <div className="text-[11px] text-slate-400 mt-1">{c.label}</div>
           </div>
-        );
-      })}
+        </div>
+      ))}
     </div>
   );
 }
